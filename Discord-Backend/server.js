@@ -18,7 +18,7 @@ app.use(cors())
 
 //db config
 
-const mongoURI = 'mongodb+srv://admin:<password>@cluster0.sofy4.mongodb.net/<dbname>?retryWrites=true&w=majority'
+const mongoURI = 'mongodb+srv://admin:<password>@cluster0.sofy4.mongodb.net/<DB name>?retryWrites=true&w=majority'
 
 mongoose.connect(mongoURI, { 
     useCreateIndex: true,
