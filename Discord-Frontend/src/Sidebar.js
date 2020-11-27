@@ -15,19 +15,31 @@ import { selectUser } from './features/userSlice'
 import db, { auth } from './firebase'
 import { useState } from 'react'
 import { useEffect } from 'react'
+import axios from './axios'
+import Pusher from 'pusher-js'
+
+
 
 const Sidebar = () => {
     const user = useSelector(selectUser)
     const [channels, setChannels] = useState([])
 
-    useEffect(() => {
-        db.collection('channels').onSnapshot(snapshot => {
-            setChannels(snapshot.docs.map(doc => ({
-                id: doc.id,
-                channel: doc.data()
-            })))
+    const getChannels = () => {
+        axios.get('/get/channelList')
+        .then((res) => {
+            console.log(res.data);
+            setChannels(res.data)
         })
-    }, [])
+    }
+
+    useEffect(() => {
+        getChannels()
+
+        const channel = pusher.subscribe('channels');
+        channel.bind('newChannel', function(data) {
+        getChannels()
+        });
+   }, [])
 
     const handleAddChannel = (e) => {
         e.preventDefault()
@@ -35,7 +47,7 @@ const Sidebar = () => {
         const channelName = prompt('Enter a new channel name')
 
         if (channelName) {
-            db.collection('channels').add({
+            axios.post('/new/channel', {
                 channelName: channelName
             })
 
@@ -60,8 +72,8 @@ const Sidebar = () => {
                 </div>
                 <div className="sidebar__channelsList">
                     {
-                        channels.map(({ id, channel }) => (
-                            <SidebarChannel key={id} id={id} channelName={channel.channelName} />
+                        channels.map(channel=> (
+                            <SidebarChannel key={channel.id} id={channel.id} channelName={channel.name} />
                         ))
                     }
                 </div>

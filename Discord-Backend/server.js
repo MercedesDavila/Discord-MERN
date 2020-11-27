@@ -2,6 +2,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import mongoData from './mongoData.js'
+import Pusher from 'pusher'
 
 
 // app config
@@ -9,7 +10,9 @@ import mongoData from './mongoData.js'
 const app = express()
 const port = process.env.PORT || 8002
 
+const pusher = new Pusher({
 
+  });
 //middleware
 
 app.use(express.json())
@@ -18,12 +21,38 @@ app.use(cors())
 
 //db config
 
-const mongoURI = 'mongodb+srv://admin:<password>@cluster0.sofy4.mongodb.net/<DB name>?retryWrites=true&w=majority'
+const mongoURI = ''
 
 mongoose.connect(mongoURI, { 
     useCreateIndex: true,
     useNewUrlParser: true,
     useUnifiedTopology: true
+})
+
+
+mongoose.connection.once('open', () => {
+    console.log('DB Connected');
+
+    const changeStream = mongoose.connection.collection('conversations').watch()
+
+    changeStream.on('change', (change) => {
+        console.log('some change');
+        if(change.operationType === 'insert'){
+            console.log('new channel');
+            pusher.trigger('channels', 'newChannel', { 
+                'change': change
+            });
+        }else if (change.operationType === 'update'){
+            console.log('new message');
+            pusher.trigger('conversation', 'newMessage', {
+                'change':change
+            });
+        }else {
+            console.log('Error triggering Pusher');
+        }
+
+    })
+
 })
 
 //api routes
